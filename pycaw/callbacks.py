@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ctypes import pointer
 
 from comtypes import COMObject
@@ -8,7 +9,8 @@ from pycaw.api.audiopolicy import (
     IAudioSessionNotification,
 )
 from pycaw.api.endpointvolume import IAudioEndpointVolumeCallback
-from pycaw.utils import AudioSession
+from pycaw.api.mmdeviceapi import IMMDevice, IMMNotificationClient, IMMDeviceEnumerator
+from pycaw.utils import AudioSession, AudioDevice
 
 
 class AudioSessionNotification(COMObject):
@@ -179,3 +181,64 @@ class AudioEndpointVolumeCallback(COMObject):
     def on_notify(self, new_volume, new_mute, event_context, channels, channel_volumes):
         """pycaw user interface"""
         raise NotImplementedError
+
+
+class MultiMediaNotifications(COMObject):
+    _com_interfaces_ = (IMMNotificationClient,)
+
+    AudioDeviceState = (
+        "Active",
+        "Disabled",
+        "NotPresent",
+        "Unplugged",
+    )
+    AudioDeviceFlow = ("Render", "Capture", "All")
+    AudioDeviceRole = ("Console", "Multimedia", "Communications")
+
+    def OnDeviceStateChanged(self, device_id, new_state_id):
+        def bitSet(val, idx):
+            return ((val >> idx) & 1) and idx or 0
+
+        new_state_bit = bitSet(new_state_id, 1) or bitSet(new_state_id, 3) or bitSet(new_state_id, 2)
+        new_state = self.AudioDeviceState[new_state_bit]
+        self.on_device_state_changed(device_id, new_state, new_state_id)
+
+    def OnDeviceAdded(self, device_id):
+        self.on_device_added(device_id)
+
+    def OnDeviceRemoved(self, device_id):
+        self.on_device_removed(device_id)
+
+    def OnDefaultDeviceChanged(self, flow_id, role_id, device_id):
+        self.on_default_device_changed(
+            device_id,
+            self.AudioDeviceFlow[flow_id],
+            self.AudioDeviceRole[role_id],
+            flow_id,
+            role_id
+        )
+
+    def OnPropertyValueChanged(self, device_id, key):
+        property_guid = key.fmtid
+        property_id =  key.pid
+        self.on_property_value_changed(device_id, property_guid, property_id)
+
+    def on_device_state_changed(self, device_id, new_state, new_state_id):
+        """pycaw user interface"""
+        pass
+
+    def on_device_added(self, device_id):
+        """pycaw user interface"""
+        pass
+
+    def on_device_removed(self, device_id):
+        """pycaw user interface"""
+        pass
+
+    def on_default_device_changed(self, device_id, flow, role, flow_id, role_id):
+        """pycaw user interface"""
+        pass
+
+    def on_property_value_changed(self, device_id, property_guid, property_id):
+        """pycaw user interface"""
+        pass

@@ -1,9 +1,50 @@
-from ctypes import HRESULT, POINTER
+from ctypes import HRESULT, POINTER, Structure
 from ctypes.wintypes import DWORD, LPCWSTR, LPWSTR, UINT
 
 from comtypes import COMMETHOD, GUID, IUnknown
 
 from .depend import IPropertyStore
+
+
+class PROPERTYKEY(Structure):
+    _fields_ = [
+        ("fmtid",   GUID),
+        ("pid",     DWORD),
+    ]
+
+
+class IMMNotificationClient(IUnknown):
+    _iid_ = GUID('{073d618c-490a-4f9f-9d18-7bec6fc21121}')
+    _methods_ = (
+        # HRESULT OnDeviceStateChanged(
+        # [in] LPCWSTR pwstrDeviceId,
+        # [in] DWORD   dwNewState);
+        COMMETHOD([], HRESULT, 'OnDeviceStateChanged',
+                  (['in'], LPCWSTR, 'pwstrDeviceId'),
+                  (['in'], DWORD, 'dwNewState')),
+        # HRESULT OnDeviceAdded(
+        # [in] LPCWSTR pwstrDeviceId);
+        COMMETHOD([], HRESULT, 'OnDeviceAdded',
+                  (['in'], LPCWSTR, 'pwstrDeviceId')),
+        # HRESULT OnDeviceRemoved(
+        # [in] LPCWSTR pwstrDeviceId);
+        COMMETHOD([], HRESULT, 'OnDeviceRemoved',
+                  (['in'], LPCWSTR, 'pwstrDeviceId')),
+        # HRESULT OnDefaultDeviceChanged(
+        # [in] EDataFlow flow,
+        # [in] ERole     role,
+        # [in] LPCWSTR   pwstrDefaultDeviceId);
+        COMMETHOD([], HRESULT, 'OnDefaultDeviceChanged',
+                  (['in'], DWORD, 'flow'),
+                  (['in'], DWORD, 'role'),
+                  (['in'], LPCWSTR, 'pwstrDefaultDeviceId')),
+        # HRESULT OnPropertyValueChanged(
+        # [in] LPCWSTR pwstrDeviceId,
+        # [in] PROPERTYKEY key);
+        COMMETHOD([], HRESULT, 'OnPropertyValueChanged',
+                  (['in'], LPCWSTR, 'pwstrDeviceId'),
+                  (['in'], PROPERTYKEY, 'key')),
+    )
 
 
 class IMMDevice(IUnknown):
@@ -95,8 +136,10 @@ class IMMDeviceEnumerator(IUnknown):
         ),
         # HRESULT RegisterEndpointNotificationCallback(
         # [in] IMMNotificationClient *pClient);
-        COMMETHOD([], HRESULT, "NotImpl1"),
+        COMMETHOD([], HRESULT, 'RegisterEndpointNotificationCallback',
+                  (['in'], POINTER(IMMNotificationClient), 'pClient')),
         # HRESULT UnregisterEndpointNotificationCallback(
         # [in] IMMNotificationClient *pClient);
-        COMMETHOD([], HRESULT, "NotImpl2"),
+        COMMETHOD([], HRESULT, 'UnregisterEndpointNotificationCallback',
+                  (['in'], POINTER(IMMNotificationClient), 'pClient')),
     )
