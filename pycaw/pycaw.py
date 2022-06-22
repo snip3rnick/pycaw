@@ -41,4 +41,4 @@ from pycaw.constants import (
     EDataFlow,
     ERole,
 )
-from pycaw.utils import AudioDevice, AudioSession, AudioUtilities
+from pycaw.utils import AudioDevice, AudioDeviceEnumerator, AudioSession, AudioUtilities

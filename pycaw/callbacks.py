@@ -11,6 +11,7 @@ from pycaw.api.audiopolicy import (
 from pycaw.api.endpointvolume import IAudioEndpointVolumeCallback
 from pycaw.api.mmdeviceapi import IMMDevice, IMMNotificationClient, IMMDeviceEnumerator
 from pycaw.utils import AudioSession, AudioDevice
+from pycaw.constants import AudioDeviceState
 
 
 class AudioSessionNotification(COMObject):
@@ -186,24 +187,11 @@ class AudioEndpointVolumeCallback(COMObject):
 class MultiMediaNotifications(COMObject):
     _com_interfaces_ = (IMMNotificationClient,)
 
-    AudioDeviceState = (
-        "Active",
-        "Disabled",
-        "NotPresent",
-        "Unplugged",
-    )
     AudioDeviceFlow = ("Render", "Capture", "All")
     AudioDeviceRole = ("Console", "Multimedia", "Communications")
 
-    @classmethod
-    def GetStateString(cls, state_id):
-        for idx in (1, 3, 2, 0):
-            if (state_id >> idx) & 1:
-                return cls.AudioDeviceState[idx]
-        return "Undefined"
-
     def OnDeviceStateChanged(self, device_id, new_state_id):
-        new_state = MultiMediaNotifications.GetStateString(new_state_id)
+        new_state = AudioDeviceState(new_state_id).name
         self.on_device_state_changed(device_id, new_state, new_state_id)
 
     def OnDeviceAdded(self, device_id):

@@ -77,18 +77,18 @@ class AudioDevice:
 
 
 class AudioDeviceEnumerator:
-    def __init__(self, flow=EDataFlow.eAll):
+    def __init__(self):
         self._enum = comtypes.CoCreateInstance(
             CLSID_MMDeviceEnumerator,
             IMMDeviceEnumerator,
             comtypes.CLSCTX_INPROC_SERVER)
         self._callback = None
 
-    def GetDevices(self, flow=EDataFlow.eAll, state=DEVICE_STATE.ACTIVE) -> List[AudioDevice]:
+    def GetDevices(self, flow=EDataFlow.eAll, state=DEVICE_STATE.MASK_ALL) -> List[AudioDevice]:
         devices = []
         if type(flow) is EDataFlow:
             flow = flow.value
-        if type(state) is DEVICE_STATE:
+        if type(state) in (DEVICE_STATE, AudioDeviceState):
             state = state.value
         collect = self._enum.EnumAudioEndpoints(flow, state)
         for i in range(collect.GetCount()):
@@ -104,6 +104,10 @@ class AudioDeviceEnumerator:
     def unregister_notification(self):
         if self._callback:
             self._enum.UnregisterEndpointNotificationCallback(self._callback)
+
+    def __iter__(self):
+        for device in self.GetDevices():
+            yield device
 
 
 
@@ -166,11 +170,15 @@ class AudioSession:
 
     @property
     def DisplayName(self):
+        if self.ProcessId == 0:
+            return "System sounds"
         s = self._ctl.GetDisplayName()
         return s
 
     @DisplayName.setter
     def DisplayName(self, value):
+        if self.ProcessId == 0:
+            return
         s = self._ctl.GetDisplayName()
         if s != value:
             self._ctl.SetDisplayName(value, IID_Empty)
