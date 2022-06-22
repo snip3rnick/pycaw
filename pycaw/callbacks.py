@@ -195,12 +195,15 @@ class MultiMediaNotifications(COMObject):
     AudioDeviceFlow = ("Render", "Capture", "All")
     AudioDeviceRole = ("Console", "Multimedia", "Communications")
 
-    def OnDeviceStateChanged(self, device_id, new_state_id):
-        def bitSet(val, idx):
-            return ((val >> idx) & 1) and idx or 0
+    @classmethod
+    def GetStateString(cls, state_id):
+        for idx in (1, 3, 2, 0):
+            if (state_id >> idx) & 1:
+                return cls.AudioDeviceState[idx]
+        return "Undefined"
 
-        new_state_bit = bitSet(new_state_id, 1) or bitSet(new_state_id, 3) or bitSet(new_state_id, 2)
-        new_state = self.AudioDeviceState[new_state_bit]
+    def OnDeviceStateChanged(self, device_id, new_state_id):
+        new_state = MultiMediaNotifications.GetStateString(new_state_id)
         self.on_device_state_changed(device_id, new_state, new_state_id)
 
     def OnDeviceAdded(self, device_id):
