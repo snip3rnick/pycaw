@@ -1,3 +1,4 @@
+from typing import List
 import warnings
 from ctypes import POINTER, cast
 
@@ -8,7 +9,7 @@ from _ctypes import COMError
 from pycaw.api.audioclient import ISimpleAudioVolume
 from pycaw.api.audiopolicy import IAudioSessionControl2, IAudioSessionManager2
 from pycaw.api.endpointvolume import IAudioEndpointVolume
-from pycaw.api.mmdeviceapi import IMMDeviceEnumerator
+from pycaw.api.mmdeviceapi import IMMDeviceEnumerator, IMMDevice
 from pycaw.constants import (
     DEVICE_STATE,
     STGM,
@@ -51,6 +52,59 @@ class AudioDevice:
             )
             self._volume = cast(iface, POINTER(IAudioEndpointVolume))
         return self._volume
+
+    def GetSessionManager(self):
+        speakers = AudioUtilities.GetSpeakers()
+        if speakers is None:
+            return None
+        # win7+ only
+        obj = self._dev.Activate(IAudioSessionManager2._iid_, comtypes.CLSCTX_ALL, None)
+        manager = obj.QueryInterface(IAudioSessionManager2)
+        return manager
+
+    def GetAllSessions(self) -> List['AudioSession']:
+        sessions = []
+        manager = self.GetSessionManager()
+        senum = manager.GetSessionEnumerator()
+        for i in range(senum.GetCount()):
+            ctrl = senum.GetSession(i)
+            if ctrl is None:
+                continue
+            session = ctrl.QueryInterface(IAudioSessionControl2)
+            if session is not None:
+                sessions.append(AudioSession(session))
+        return sessions
+
+
+class AudioDeviceEnumerator:
+    def __init__(self, flow=EDataFlow.eAll):
+        self._enum = comtypes.CoCreateInstance(
+            CLSID_MMDeviceEnumerator,
+            IMMDeviceEnumerator,
+            comtypes.CLSCTX_INPROC_SERVER)
+        self._callback = None
+
+    def GetDevices(self, flow=EDataFlow.eAll, state=DEVICE_STATE.ACTIVE) -> List[AudioDevice]:
+        devices = []
+        if type(flow) is EDataFlow:
+            flow = flow.value
+        if type(state) is DEVICE_STATE:
+            state = state.value
+        collect = self._enum.EnumAudioEndpoints(flow, state)
+        for i in range(collect.GetCount()):
+            device = collect.Item(i)
+            devices.append(AudioUtilities.CreateDevice(device))
+        return devices
+
+    def register_notification(self, callback):
+        if self._callback is None:
+            self._callback = callback
+            self._enum.RegisterEndpointNotificationCallback(self._callback)
+
+    def unregister_notification(self):
+        if self._callback:
+            self._enum.UnregisterEndpointNotificationCallback(self._callback)
+
 
 
 class AudioSession:
