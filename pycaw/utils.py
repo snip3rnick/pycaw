@@ -96,6 +96,10 @@ class AudioDeviceEnumerator:
             devices.append(AudioUtilities.CreateDevice(device))
         return devices
 
+    def GetDevice(self, device_id: str) -> AudioDevice:
+        device: IMMDevice = self._enum.GetDevice(device_id)
+        return AudioUtilities.CreateDevice(device)
+
     def register_notification(self, callback):
         if self._callback is None:
             self._callback = callback
