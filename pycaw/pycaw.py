@@ -33,7 +33,14 @@ from pycaw.api.mmdeviceapi.depend.structures import (
     PROPVARIANT,
     PROPVARIANT_UNION,
 )
+from pycaw.api.policyconfig import (
+    IPolicyConfig,
+    IPolicyConfigVista,
+)
 from pycaw.constants import (
+    CLSID_MMDeviceEnumerator,
+    CLSID_PolicyConfigClient,
+    CLSID_PolicyConfigVistaClient,
     AUDCLNT_SHAREMODE,
     DEVICE_STATE,
     STGM,
