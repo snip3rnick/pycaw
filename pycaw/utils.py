@@ -10,11 +10,13 @@ from pycaw.api.audioclient import ISimpleAudioVolume
 from pycaw.api.audiopolicy import IAudioSessionControl2, IAudioSessionManager2
 from pycaw.api.endpointvolume import IAudioEndpointVolume
 from pycaw.api.mmdeviceapi import IMMDeviceEnumerator, IMMDevice
+from pycaw.api.policyconfig import IPolicyConfig
 from pycaw.constants import (
     DEVICE_STATE,
     STGM,
     AudioDeviceState,
     CLSID_MMDeviceEnumerator,
+    CLSID_PolicyConfigClient,
     EDataFlow,
     ERole,
     IID_Empty,
@@ -52,6 +54,13 @@ class AudioDevice:
             )
             self._volume = cast(iface, POINTER(IAudioEndpointVolume))
         return self._volume
+
+    def SetDefaultEndpoint(self, erole: ERole):
+        policyconf = comtypes.CoCreateInstance(
+            CLSID_PolicyConfigClient,
+            IPolicyConfig,
+            comtypes.CLSCTX_ALL)
+        return policyconf.SetDefaultEndpoint(self.id, erole.value)
 
     def GetSessionManager(self):
         speakers = AudioUtilities.GetSpeakers()

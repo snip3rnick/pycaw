@@ -115,14 +115,14 @@ class IMMDeviceEnumerator(IUnknown):
         # HRESULT GetDefaultAudioEndpoint(
         # [in] EDataFlow dataFlow,
         # [in] ERole role,
-        # [out] IMMDevice **ppDevice);
+        # [out] IMMDevice **ppEndpoint);
         COMMETHOD(
             [],
             HRESULT,
             "GetDefaultAudioEndpoint",
             (["in"], DWORD, "dataFlow"),
             (["in"], DWORD, "role"),
-            (["out"], POINTER(POINTER(IMMDevice)), "ppDevices"),
+            (["out"], POINTER(POINTER(IMMDevice)), "ppEndpoint"),
         ),
         # HRESULT GetDevice(
         # [in] LPCWSTR pwstrId,
